@@ -1,0 +1,6 @@
+name: AlexCustomMsg
+version: '1.0'
+main: love.alex.AlexCustomMsg
+api-version: '1.21'
+prefix: ACMSG
+authors: [ wolnefury, alex, void ]
