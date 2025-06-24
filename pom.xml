@@ -6,7 +6,7 @@
 
     <groupId>wolnefury</groupId>
     <artifactId>AlexCustomMsg</artifactId>
-    <version>1.4.1-DEV</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <name>AlexCustomMsg</name>

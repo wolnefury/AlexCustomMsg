@@ -1,5 +1,6 @@
 name: AlexCustomMsg
-version: '1.4.1-DEV'
+description: A lovingly crafted private messaging plugin with ignore support, PlaceholderAPI hooks, and full customization.
+version: '1.0'
 main: love.alex.AlexCustomMsg
 api-version: '1.21'
 prefix: ACMSG
@@ -51,3 +52,13 @@ permissions:
   acmsg.ignorelist:
     description: Allows to see the list of currently ignored players
     default: true
+  acmsg.*:
+    description: All AlexCustomMSG permissions
+    default: op
+    children:
+      acmsg.msg: true
+      acmsg.reply: true
+      acmsg.reload: true
+      acmsg.ignore: true
+      acmsg.unignore: true
+      acmsg.ignorelist: true
