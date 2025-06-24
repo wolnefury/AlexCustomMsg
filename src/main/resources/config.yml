@@ -1,0 +1,58 @@
+# ACMSG config file.
+# If you have PlaceholderAPI downloaded, feel free to use it in literally every single message.
+
+# Message format for sender
+sender-format: "&a✉ &bYou &7➡ &e{0}&7: &f{1}"
+
+# Message format for receiver
+receiver-format: "&a✉ &b{0} &7➡ &eYou&7: &f{1}"
+
+# Hover text and click-to-reply suggestion
+hover-text: "Click to reply to {0}!"
+click-template: "/msg {0} "
+
+# Sound config. Change the sound being played when you receive a new message.
+sound:
+  name: "BLOCK_NOTE_BLOCK_BELL"
+  volume: 1.0
+  pitch: 1.2
+
+# Reloading
+config-reload-success: "&aACMSG's config.yml successfully reloaded!"
+ignored-reload-success: "&aACMSG's ignored.yml successfully reloaded!"
+ignored-reload-fail: "&cFailed to save ignore list. Check console for details."
+reload-success: "&aACMSG reloaded!"
+
+# Usages
+r: "&cUsage: /r <message>"
+msg: "&cUsage: /msg <player> <message>"
+ignore: "&cUsage: /ignore <player>"
+unignore: "&cUsage: /unignore <player>"
+
+# Errors
+not-online: "&cThat player is not online."
+no-longer-online: "&cThat player is no longer online."
+no-one-to-reply-to: "&cNo one to reply to."
+invalid-target-player: "&cInvalid target player."
+no-permission: "&cYou don't have permission to execute command."
+
+# Ignore Setup
+# When set to true, offline players can also be ignored
+# When set to false, you can only ignore players that are online
+# !! Setting this to "false" might break functionality on cracked servers!
+allow-ignore-unknown: true
+
+# Ignore Messages
+is-ignoring-you: "&cThat player is ignoring you."
+werent-ignoring: "&cYou weren't ignoring that player."
+not-ignoring-anyone: "&eYou are not ignoring anyone."
+now-ignoring: "&bYou are now ignoring &a{0}&b."
+no-longer-ignoring: "&aYou are no longer ignoring &d{0}&a."
+already-ignoring: "&cYou already ignore {0}!"
+cant-ignore-yourself: "&eYou can't ignore yourself, silly."
+cant-ignore-unknown: "&cYou can't unignore {0} because they were never known."
+
+ignorelist-header: "&dIgnored players:"
+ignorelist-entry: "&8- &7{0}"
+
+# Config file written by: wolnefury, void, alex

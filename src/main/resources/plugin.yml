@@ -1,6 +1,53 @@
 name: AlexCustomMsg
-version: '1.0'
+version: '1.4.1-DEV'
 main: love.alex.AlexCustomMsg
 api-version: '1.21'
 prefix: ACMSG
-authors: [ wolnefury, alex, void ]
+authors: [ lovestudio, wolnefury, alex, void ]
+website: https://lovestudio.gitbook.io/alexcustommsg/
+softdepend: [PlaceholderAPI]
+commands:
+  msg:
+    description: Send a private message
+    usage: /msg <player> <message>
+    aliases: [tell, whisper, w]
+    permission: acmsg.msg
+  r:
+    description: Reply to the last private message
+    usage: /r <message>
+    permission: acmsg.reply
+  acmsgreload:
+    description: Reloads the plugin config file
+    usage: /acmsgreload
+    permission: acmsg.reload
+  ignore:
+    description: Ignore a player
+    usage: /ignore <player>
+    permission: acmsg.ignore
+  unignore:
+    description: Unignore a player
+    usage: /unignore <player>
+    permission: acmsg.unignore
+  ignorelist:
+    description: Show list of ignored players
+    usage: /ignorelist
+    permission: acmsg.ignorelist
+permissions:
+  acmsg.msg:
+    description: Allows whispering to players
+    default: true
+  acmsg.reply:
+    description: Allows replying to players
+    default: true
+  acmsg.reload:
+    description: Allows reloading the plugin
+    default: op
+  acmsg.ignore:
+    description: Allows ignoring players
+    default: true
+  acmsg.unignore:
+    description: Allows unignoring players
+    default: true
+  acmsg.ignorelist:
+    description: Allows to see the list of currently ignored players
+    default: true
