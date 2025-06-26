@@ -37,12 +37,12 @@ invalid-target-player: "&cInvalid target player."
 no-permission: "&cYou don't have permission to execute command."
 
 # Ignore Setup
-# When set to true, offline players can also be ignored
-# When set to false, you can only ignore players that are online
-# !! Setting this to "false" might break functionality on cracked servers!
-# CAUTION!: This also allows ignoring players that were never even on the server.
-# Because of this, when that kind of player gets ignored, it will appear on "/ignorelist" as "???".
-allow-ignore-unknown: true
+# Offline only is highly not recommended.
+# On cracked servers, use hybrid.
+# On premium servers, use online-only.
+uuid-resolution:
+  mode: hybrid # options: hybrid, online-only, offline-only
+could-not-find-uuid: "&cCould not find a valid UUID for &b{0}&c."
 
 # Ignore Messages
 is-ignoring-you: "&cThat player is ignoring you."
