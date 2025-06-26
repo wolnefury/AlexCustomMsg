@@ -1,6 +1,14 @@
 # 💌 AlexCustomMSG
 _A lovingly crafted private messaging plugin by Void & Alex 🥺💖_
 
+> [!TIP]
+> Full documentation, wiki, and FAQ available here:
+> [click me](https://lovestudio.gitbook.io/alexcustommsg/)
+
+> [!WARNING]
+> We are currently working on MySQL support.
+> Don't nag us about it!
+
 ✨ Features:
 - Customizable /msg and /r commands with PAPI support
 - Ignore system: /ignore, /unignore, /ignorelist
