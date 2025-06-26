@@ -32,6 +32,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
     private FileConfiguration ignoreConfig;
 
     private final Map<UUID, UUID> lastMessaged = new HashMap<>();
+    private String uuidResolutionMode;
     private final Map<UUID, Set<UUID>> ignoreMap = new HashMap<>();
 
     public void sendMessage(Player player, String path, String... placeholders) {
@@ -72,6 +73,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        this.uuidResolutionMode = getConfig().getString("uuid-resolution.mode", "hybrid").toLowerCase();
 
         ignoreFile = new File(getDataFolder(), "ignored.yml");
         if (!ignoreFile.exists()) {
@@ -167,19 +169,12 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
                 String targetName = args[0];
 
-                // Try to get OfflinePlayer
-                OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
-                UUID targetUUID = targetPlayer.getUniqueId();
-
-                // If the player never joined, generate UUID for cracked support
-                if (!targetPlayer.hasPlayedBefore() && !targetPlayer.isOnline()) {
-                    if (!getConfig().getBoolean("allow-ignore-unknown", true)) {
-                        sendMessage(player, "cant-ignore-unknown", targetName);
-                        return true;
-                    }
-
-                    targetUUID = UUID.nameUUIDFromBytes(("OfflinePlayer:" + targetName).getBytes(StandardCharsets.UTF_8));
+                UUID targetUUID = resolveUUID(targetName);
+                if (targetUUID == null) {
+                    sendMessage(player, "could-not-find-uuid", targetName);
+                    return true;
                 }
+
 
                 if (player.getUniqueId().equals(targetUUID)) {
                     sendMessage(player, "cant-ignore-yourself");
@@ -222,16 +217,10 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
                 String targetName = args[0];
 
-                OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
-                UUID targetUUID = targetPlayer.getUniqueId();
-
-                if (!targetPlayer.hasPlayedBefore() && !targetPlayer.isOnline()) {
-                    if (!getConfig().getBoolean("allow-ignore-unknown", true)) {
-                        sendMessage(player, "cant-unignore-unknown", targetName);
-                        return true;
-                    }
-
-                    targetUUID = UUID.nameUUIDFromBytes(("OfflinePlayer:" + targetName).getBytes(StandardCharsets.UTF_8));
+                UUID targetUUID = resolveUUID(targetName);
+                if (targetUUID == null) {
+                    sendMessage(player, "could-not-find-uuid", targetName);
+                    return true;
                 }
 
                 Set<UUID> ignored = ignoreMap.get(player.getUniqueId());
@@ -341,6 +330,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
             }
 
             reloadConfig();
+            this.uuidResolutionMode = getConfig().getString("uuid-resolution.mode", "hybrid").toLowerCase();
             sendMessage(player, "config-reload-success");
             ignoreConfig = new YamlConfiguration();
             for (UUID playerUUID : ignoreMap.keySet()) {
@@ -448,5 +438,49 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
         }
         return completions;
     }
+
+    private UUID resolveUUID(String name) {
+        switch (uuidResolutionMode) {
+            case "online-only" -> {
+                Player online = Bukkit.getPlayerExact(name);
+                if (online != null) {
+                    return online.getUniqueId();
+                }
+
+                OfflinePlayer known = Bukkit.getOfflinePlayer(name);
+                if (known.hasPlayedBefore()) {
+                    return known.getUniqueId();
+                }
+
+                getLogger().warning("Couldn't resolve UUID for '" + name + "' in online-only mode!");
+                return null;
+            }
+
+            case "offline-only" -> {
+                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+            }
+
+            case "hybrid" -> {
+                Player online = Bukkit.getPlayerExact(name);
+                if (online != null) {
+                    return online.getUniqueId();
+                }
+
+                OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
+                if (offline.hasPlayedBefore()) {
+                    return offline.getUniqueId();
+                }
+
+                getLogger().warning("Player '" + name + "' has never joined before — using fallback offline UUID.");
+                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+            }
+
+            default -> {
+                getLogger().warning("Unknown uuid-resolution.mode: " + uuidResolutionMode + ". Using offline-only.");
+                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+            }
+        }
+    }
+
 }
 
