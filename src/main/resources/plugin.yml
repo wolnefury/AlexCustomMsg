@@ -1,6 +1,6 @@
 name: AlexCustomMsg
 description: A lovingly crafted private messaging plugin with ignore support, PlaceholderAPI hooks, and full customization.
-version: '1.0'
+version: '1.1'
 main: love.alex.AlexCustomMsg
 api-version: '1.21'
 prefix: ACMSG
