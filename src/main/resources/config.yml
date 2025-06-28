@@ -1,15 +1,16 @@
 # ACMSG config file.
 # If you have PlaceholderAPI downloaded, feel free to use it in literally every single message.
 
+# Formats
+
 # Message format for sender
-sender-format: "&a✉ &bYou &7➡ &e{0}&7: &f{1}"
-
+format:
+  sender-format: "&a✉ &bYou &7➡ &e{0}&7: &f{1}"
 # Message format for receiver
-receiver-format: "&a✉ &b{0} &7➡ &eYou&7: &f{1}"
-
+  receiver-format: "&a✉ &b{0} &7➡ &eYou&7: &f{1}"
 # Hover text and click-to-reply suggestion
-hover-text: "Click to reply to {0}!"
-click-template: "/msg {0} "
+  hover-text: "Click to reply to {0}!"
+  click-template: "/msg {0} "
 
 # Sound config. Change the sound being played when you receive a new message.
 sound:
@@ -18,44 +19,54 @@ sound:
   pitch: 1.2
 
 # Reloading
-config-reload-success: "&aACMSG's config.yml successfully reloaded!"
-ignored-reload-success: "&aACMSG's ignored.yml successfully reloaded!"
-ignored-reload-fail: "&cFailed to save ignore list. Check console for details."
-reload-success: "&aACMSG reloaded!"
+reload:
+  ignored-reload-fail: "&cFailed to save ignore list. Check console for details."
+  config-reload-success: "&aACMSG's config.yml successfully reloaded!"
+  ignored-reload-success: "&aACMSG's ignored.yml successfully reloaded!"
+  reload-success: "&aACMSG reloaded!"
 
 # Usages
-r: "&cUsage: /r <message>"
-msg: "&cUsage: /msg <player> <message>"
-ignore: "&cUsage: /ignore <player>"
-unignore: "&cUsage: /unignore <player>"
+usage:
+  ignore: "&cUsage: /ignore <player>"
+  unignore: "&cUsage: /unignore <player>"
+  forceunignore: "&cUsage: /forceunignore <uuid>"
+  reply: "&cUsage: /r <message>"
+  msg: "&cUsage: /msg <player> <message>"
 
 # Errors
-not-online: "&cThat player is not online."
-no-longer-online: "&cThat player is no longer online."
-no-one-to-reply-to: "&cNo one to reply to."
-invalid-target-player: "&cInvalid target player."
-no-permission: "&cYou don't have permission to execute command."
-
-# Ignore Setup
-# Offline only is highly not recommended.
-# On cracked servers, use hybrid.
-# On premium servers, use online-only.
-uuid-resolution:
-  mode: hybrid # options: hybrid, online-only, offline-only
-could-not-find-uuid: "&cCould not find a valid UUID for &b{0}&c."
+error:
+  no-permission: "&cYou don't have permission to execute command."
+  uuid-not-found: "&cCould not find a valid UUID for &b{0}&c."
+  cant-ignore-yourself: "&eYou can't ignore yourself, silly."
+  already-ignoring: "&cYou already ignore {0}!"
+  werent-ignoring: "&cYou weren't ignoring that player."
+  invalid-uuid: "&cInvalid UUID format: &b{0}"
+  no-one-to-reply-to: "&cNo one to reply to."
+  not-online: "&cThat player is not online."
+  no-longer-online: "&cThat player is no longer online."
 
 # Ignore Messages
-is-ignoring-you: "&cThat player is ignoring you."
-werent-ignoring: "&cYou weren't ignoring that player."
-not-ignoring-anyone: "&eYou are not ignoring anyone."
-now-ignoring: "&bYou are now ignoring &a{0}&b."
-no-longer-ignoring: "&aYou are no longer ignoring &d{0}&a."
-already-ignoring: "&cYou already ignore {0}!"
-cant-ignore-yourself: "&eYou can't ignore yourself, silly."
-cant-ignore-unknown: "&cYou can't ignore {0} because they were never known."
-cant-unignore-unknown: "&cYou can't unignore {0} because they were never known."
+ignore:
+  now-ignoring: "&bYou are now ignoring &a{0}&b."
+  no-longer-ignoring: "&aYou are no longer ignoring &d{0}&a."
+  not-ignoring-anyone: "&eYou are not ignoring anyone."
+  ignorelist-header: "&dIgnored players:"
+  ignorelist-entry: "&8- &7{0}"
+  is-ignoring-you: "&cThat player is ignoring you."
+  forceunignore-success: "&aUUID &b{0} &ahas been removed from all ignore lists."
+  forceunignore-notfound: "&eUUID &b{0} &ewas not in any ignore list."
 
-ignorelist-header: "&dIgnored players:"
-ignorelist-entry: "&8- &7{0}"
+# Settings
+settings:
+  # This setting applies to ignore-related commands.
+  # Offline-only used to exist, but due to inconsistency and unstability, the feature was removed in 1.2.
+  # On cracked servers, use hybrid.
+  # On premium servers, use online-only.
+  uuid-resolution: hybrid # options: hybrid, online-only
+
+# Debug Mode (Useful When Things Break)
+debug: false
+debug-enabled: "&aDebug Logging Info Enabled."
+debug-disabled: "&cDebug Logging Info Disabled."
 
 # Config file written by: wolnefury, void, alex

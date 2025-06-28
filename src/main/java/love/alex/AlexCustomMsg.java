@@ -30,6 +30,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
     private File ignoreFile;
     private FileConfiguration ignoreConfig;
+    private boolean debugMode;
 
     private final Map<UUID, UUID> lastMessaged = new HashMap<>();
     private String uuidResolutionMode;
@@ -52,10 +53,9 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
             return;
         }
 
-        getLogger().warning("Missing message path: " + path);
-        player.sendMessage(colorize("&cMissing message path: " + path));
+        debug.warning("Missing message path: " + path);
+        player.sendMessage(colorize("&cMissing message path: " + path + "&c. Contact an admin and send them this message."));
     }
-
 
     private String replacePlaceholders(Player context, String message, String... values) {
         for (int i = 0; i < values.length; i++) {
@@ -70,10 +70,20 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
         return message;
     }
 
+    private @NotNull Component colorize(String message) {
+        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+    }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        this.uuidResolutionMode = getConfig().getString("uuid-resolution.mode", "hybrid").toLowerCase();
+        this.debugMode = getConfig().getBoolean("debug", false);
+        this.uuidResolutionMode = getConfig().getString("settings.uuid-resolution", "hybrid").toLowerCase();
+
+        if (!uuidResolutionMode.equals("hybrid") && !uuidResolutionMode.equals("online-only")) {
+            getLogger().warning("Unknown settings.uuid-resolution: '" + uuidResolutionMode + "'. Defaulting to 'hybrid'.");
+            uuidResolutionMode = "hybrid";
+        }
 
         ignoreFile = new File(getDataFolder(), "ignored.yml");
         if (!ignoreFile.exists()) {
@@ -103,6 +113,8 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
         Objects.requireNonNull(getCommand("ignore")).setTabCompleter(this);
         Objects.requireNonNull(getCommand("unignore")).setTabCompleter(this);
         Objects.requireNonNull(getCommand("ignorelist")).setTabCompleter(this);
+        Objects.requireNonNull(getCommand("forceunignore")).setExecutor(this);
+        Objects.requireNonNull(getCommand("forceunignore")).setTabCompleter(this);
         getLogger().info("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
         getLogger().info("Enabling AlexCustomMSG...");
         getLogger().info("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
@@ -148,10 +160,6 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
         getLogger().info("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
     }
 
-    private @NotNull Component colorize(String message) {
-        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(message);
-    }
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String @NotNull [] args) {
         if (!(sender instanceof Player player)) return false;
@@ -159,11 +167,11 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
         switch (command.getName().toLowerCase()) {
             case "ignore" -> {
                 if (!sender.hasPermission("acmsg.ignore")) {
-                    sendMessage(player, "no-permission");
+                    sendMessage(player, "error.no-permission");
                     return true;
                 }
                 if (args.length < 1) {
-                    sendMessage(player, "ignore"); // Show proper usage if no argument
+                    sendMessage(player, "usage.ignore"); // Show proper usage if no argument
                     return true;
                 }
 
@@ -171,24 +179,24 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
                 UUID targetUUID = resolveUUID(targetName);
                 if (targetUUID == null) {
-                    sendMessage(player, "could-not-find-uuid", targetName);
+                    sendMessage(player, "error.uuid-not-found", targetName);
                     return true;
                 }
 
 
                 if (player.getUniqueId().equals(targetUUID)) {
-                    sendMessage(player, "cant-ignore-yourself");
+                    sendMessage(player, "error.cant-ignore-yourself");
                     return true;
                 }
 
                 // Already ignoring?
                 if (ignoreMap.getOrDefault(player.getUniqueId(), new HashSet<>()).contains(targetUUID)) {
-                    sendMessage(player, "already-ignoring", targetName);
+                    sendMessage(player, "error.already-ignoring", targetName);
                     return true;
                 }
 
                 ignoreMap.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>()).add(targetUUID);
-                sendMessage(player, "now-ignoring", targetName);
+                sendMessage(player, "ignore.now-ignoring", targetName);
 
                 ignoreConfig = new YamlConfiguration();
                 for (UUID playerUUID : ignoreMap.keySet()) {
@@ -200,14 +208,14 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
                 try {
                     ignoreConfig.save(ignoreFile);
                 } catch (IOException e) {
-                    getLogger().severe("Failed to save ignore list: " + e.getMessage());
+                    debug.severe("Failed to save ignore list: " + e.getMessage());
                 }
                 return true;
             }
 
             case "unignore" -> {
                 if (!sender.hasPermission("acmsg.unignore")) {
-                    sendMessage(player, "no-permission");
+                    sendMessage(player, "error.no-permission");
                     return true;
                 }
                 if (args.length < 1) {
@@ -219,13 +227,13 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
                 UUID targetUUID = resolveUUID(targetName);
                 if (targetUUID == null) {
-                    sendMessage(player, "could-not-find-uuid", targetName);
+                    sendMessage(player, "error.uuid-not-found", targetName);
                     return true;
                 }
 
                 Set<UUID> ignored = ignoreMap.get(player.getUniqueId());
                 if (ignored != null && ignored.remove(targetUUID)) {
-                    sendMessage(player, "no-longer-ignoring", targetName);
+                    sendMessage(player, "ignore.no-longer-ignoring", targetName);
 
                     ignoreConfig = new YamlConfiguration();
                     for (UUID playerUUID : ignoreMap.keySet()) {
@@ -237,11 +245,11 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
                     try {
                         ignoreConfig.save(ignoreFile);
                     } catch (IOException e) {
-                        getLogger().severe("Failed to save ignore list: " + e.getMessage());
+                        debug.severe("Failed to save ignore list: " + e.getMessage());
                     }
 
                 } else {
-                    sendMessage(player, "werent-ignoring", targetName);
+                    sendMessage(player, "error.werent-ignoring", targetName);
                 }
                 return true;
             }
@@ -249,13 +257,13 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
             case "ignorelist" -> {
                 if (!sender.hasPermission("acmsg.ignorelist")) {
-                    sendMessage(player, "no-permission");
+                    sendMessage(player, "error.no-permission");
                     return true;
                 }
 
                 Set<UUID> ignored = ignoreMap.getOrDefault(player.getUniqueId(), Collections.emptySet());
                 if (ignored.isEmpty()) {
-                    sendMessage(player, "not-ignoring-anyone");
+                    sendMessage(player, "ignore.not-ignoring-anyone");
                     return true;
                 }
 
@@ -266,29 +274,77 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .toList();
 
-                sendMessage(player, "ignorelist-header");
+                sendMessage(player, "ignore.ignorelist-header");
                 for (String name : names) {
-                    sendMessage(player, "ignorelist-entry", name);
+                    sendMessage(player, "ignore.ignorelist-entry", name);
                 }
 
                 return true;
             }
+            case "forceunignore" -> {
+                if (!sender.hasPermission("acmsg.forceunignore")) {
+                    sendMessage(player, "error.no-permission");
+                    return true;
+                }
+
+                if (args.length < 1) {
+                    sendMessage(player, "usage.forceunignore");
+                    return true;
+                }
+
+                try {
+                    UUID targetUUID = UUID.fromString(args[0]);
+                    boolean removed = false;
+
+                    for (Set<UUID> ignoredSet : ignoreMap.values()) {
+                        if (ignoredSet.remove(targetUUID)) {
+                            removed = true;
+                        }
+                    }
+
+                    if (removed) {
+                        ignoreConfig = new YamlConfiguration();
+                        for (UUID playerUUID : ignoreMap.keySet()) {
+                            Set<UUID> ignoredSave = ignoreMap.get(playerUUID);
+                            List<String> ignoredList = ignoredSave.stream().map(UUID::toString).toList();
+                            ignoreConfig.set(playerUUID.toString(), ignoredList);
+                        }
+
+                        try {
+                            ignoreConfig.save(ignoreFile);
+                            sendMessage(player, "ignore.forceunignore-success", args[0]);
+                        } catch (IOException e) {
+                            debug.severe("Failed to save ignore list: " + e.getMessage());
+                            sendMessage(player, "reload.ignored-reload-fail");
+                        }
+
+                    } else {
+                        sendMessage(player, "ignore.forceunignore-notfound", args[0]);
+                    }
+
+                } catch (IllegalArgumentException e) {
+                    sendMessage(player, "error.invalid-uuid", args[0]);
+                }
+
+                return true;
+            }
+
         }
 
         if (command.getName().equalsIgnoreCase("msg")) {
             if (!sender.hasPermission("acmsg.msg")) {
-                sendMessage(player, "no-permission");
+                sendMessage(player, "error.no-permission");
                 return true;
             }
 
             if (args.length < 2) {
-                sendMessage(player, "msg");
+                sendMessage(player, "usage.msg");
                 return true;
             }
 
             Player target = Bukkit.getPlayerExact(args[0]);
             if (target == null || !target.isOnline()) {
-                sendMessage(player, "not-online");
+                sendMessage(player, "error.not-online");
                 return true;
             }
 
@@ -298,24 +354,24 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
         if (command.getName().equalsIgnoreCase("r")) {
             if (!sender.hasPermission("acmsg.reply")) {
-                sendMessage(player, "no-permission");
+                sendMessage(player, "error.no-permission");
                 return true;
             }
 
             UUID last = lastMessaged.get(player.getUniqueId());
             if (last == null) {
-                sendMessage(player, "no-one-to-reply-to");
+                sendMessage(player, "error.no-one-to-reply-to");
                 return true;
             }
 
             Player target = Bukkit.getPlayer(last);
             if (target == null || !target.isOnline()) {
-                sendMessage(player, "no-longer-online");
+                sendMessage(player, "error.no-longer-online");
                 return true;
             }
 
             if (args.length < 1) {
-                sendMessage(player, "r");
+                sendMessage(player, "usage.reply");
                 return true;
             }
 
@@ -325,13 +381,15 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
         if (command.getName().equalsIgnoreCase("acmsgreload")) {
             if (!sender.hasPermission("acmsg.reload")) {
-                sendMessage(player, "no-permission");
+                sendMessage(player, "error.no-permission");
                 return true;
             }
 
             reloadConfig();
-            this.uuidResolutionMode = getConfig().getString("uuid-resolution.mode", "hybrid").toLowerCase();
-            sendMessage(player, "config-reload-success");
+            this.debugMode = getConfig().getBoolean("debug", false);
+            this.uuidResolutionMode = getConfig().getString("settings.uuid-resolution", "hybrid").toLowerCase();
+            debug.info("Config file saved successfully!");
+            sendMessage(player, "reload.config-reload-success");
             ignoreConfig = new YamlConfiguration();
             for (UUID playerUUID : ignoreMap.keySet()) {
                 Set<UUID> ignored = ignoreMap.get(playerUUID);
@@ -341,13 +399,19 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
             try {
                 ignoreConfig.save(ignoreFile);
-                getLogger().info("Ignore list saved successfully!");
-                sendMessage(player, "ignored-reload-success");
+                debug.info("Ignore list saved successfully!");
+                sendMessage(player, "reload.ignored-reload-success");
             } catch (IOException e) {
-                getLogger().severe("Failed to save ignore list: " + e.getMessage());
-                sendMessage(player, "ignored-reload-fail");
+                debug.severe("Failed to save ignore list: " + e.getMessage());
+                sendMessage(player, "reload.ignored-reload-fail");
             }
-            sendMessage(player, "reload-success");
+            if (debugMode) {
+                debug.info("Debug mode: ENABLED");
+                sendMessage(player, "debug-enabled");
+            } else {
+                sendMessage(player, "debug-disabled");
+            }
+            sendMessage(player, "reload.reload-success");
         }
 
         return true;
@@ -359,13 +423,13 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
 
         Set<UUID> ignored = ignoreMap.get(receiver.getUniqueId());
         if (ignored != null && ignored.contains(sender.getUniqueId())) {
-            sendMessage(sender, "is-ignoring-you");
+            sendMessage(sender, "ignore.is-ignoring-you");
             return;
         }
 
-        String receiverFormat = getConfig().getString("receiver-format");
-        String hoverText = getConfig().getString("hover-text", "&7Click to reply to {0}");
-        String clickCommand = getConfig().getString("click-template", "/msg {0}");
+        String receiverFormat = getConfig().getString("format.receiver-format");
+        String hoverText = getConfig().getString("format.hover-text", "&7Click to reply to {0}");
+        String clickCommand = getConfig().getString("format.click-template", "/msg {0}");
 
         String receiverMessage = replacePlaceholders(receiver, receiverFormat, sender.getName(), message);
         String processedHover = replacePlaceholders(receiver, hoverText, sender.getName());
@@ -375,7 +439,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
                 .hoverEvent(HoverEvent.showText(colorize(processedHover)))
                 .clickEvent(ClickEvent.suggestCommand(processedClickCommand));
 
-        sendMessage(sender, "sender-format", receiver.getName(), message);
+        sendMessage(sender, "format.sender-format", receiver.getName(), message);
         receiver.sendMessage(receiverMsg);
 
         // Configurable sound
@@ -387,7 +451,7 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
             Sound sound = Sound.valueOf(soundName.toUpperCase()); // Ok, shut the fuck up; I know it's deprecated?
             receiver.playSound(receiver.getLocation(), sound, volume, pitch);
         } catch (IllegalArgumentException e) {
-            getLogger().warning("Invalid sound name in config: " + soundName);
+            debug.warning("Invalid sound name in config: " + soundName);
         }
     }
 
@@ -440,45 +504,35 @@ public class AlexCustomMsg extends JavaPlugin implements TabExecutor, TabComplet
     }
 
     private UUID resolveUUID(String name) {
-        switch (uuidResolutionMode) {
-            case "online-only" -> {
-                Player online = Bukkit.getPlayerExact(name);
-                if (online != null) {
-                    return online.getUniqueId();
-                }
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) return online.getUniqueId();
 
-                OfflinePlayer known = Bukkit.getOfflinePlayer(name);
-                if (known.hasPlayedBefore()) {
-                    return known.getUniqueId();
-                }
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
+        if (offline.hasPlayedBefore()) return offline.getUniqueId();
 
-                getLogger().warning("Couldn't resolve UUID for '" + name + "' in online-only mode!");
-                return null;
-            }
+        if (uuidResolutionMode.equals("online-only")) {
+            debug.info("Couldn't resolve UUID for '" + name + "' in online-only mode!");
+            return null;
+        }
 
-            case "offline-only" -> {
-                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
-            }
+        // If hybrid mode: fallback denied
+        debug.info("Player '" + name + "' has never joined before - ignoring request.");
+        return null;
+    }
 
-            case "hybrid" -> {
-                Player online = Bukkit.getPlayerExact(name);
-                if (online != null) {
-                    return online.getUniqueId();
-                }
+    private final DebugLogger debug = new DebugLogger();
 
-                OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
-                if (offline.hasPlayedBefore()) {
-                    return offline.getUniqueId();
-                }
+    private class DebugLogger {
+        void info(String message) {
+            if (debugMode) getLogger().info("[Debug] " + message);
+        }
 
-                getLogger().warning("Player '" + name + "' has never joined before — using fallback offline UUID.");
-                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
-            }
+        void warning(String message) {
+            if (debugMode) getLogger().warning("[Debug] " + message);
+        }
 
-            default -> {
-                getLogger().warning("Unknown uuid-resolution.mode: " + uuidResolutionMode + ". Using offline-only.");
-                return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
-            }
+        void severe(String message) {
+            if (debugMode) getLogger().severe("[Debug] " + message);
         }
     }
 

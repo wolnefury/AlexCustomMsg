@@ -1,6 +1,6 @@
 name: AlexCustomMsg
 description: A lovingly crafted private messaging plugin with ignore support, PlaceholderAPI hooks, and full customization.
-version: '1.1'
+version: '1.2'
 main: love.alex.AlexCustomMsg
 api-version: '1.21'
 prefix: ACMSG
@@ -33,7 +33,14 @@ commands:
     description: Show list of ignored players
     usage: /ignorelist
     permission: acmsg.ignorelist
+  forceunignore:
+    description: Forcefully unignore a UUID from all players
+    permission: acmsg.forceunignore
+    usage: /forceunignore <uuid>
 permissions:
+  acmsg.forceunignore:
+    description: Forces a deletion of an entry in ignored.yml
+    default: op
   acmsg.msg:
     description: Allows whispering to players
     default: true
@@ -62,3 +69,4 @@ permissions:
       acmsg.ignore: true
       acmsg.unignore: true
       acmsg.ignorelist: true
+      acmsg.forceunignore: true
